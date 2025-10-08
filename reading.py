@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Dict, List
+from dataclasses import dataclass, field
+from datetime import date, time
+from typing import Dict, List, Optional, Set
 
 
 @dataclass
@@ -12,11 +13,25 @@ class ChannelBookState:
         chunks: The list of paragraph-chunks to deliver.
         index: Index of the next chunk to deliver.
         chunk_size: Number of paragraphs per chunk.
+        auto_post_time: Optional[time] - Scheduled daily post time, if set.
+        auto_active: Whether automatic posting is enabled for this thread.
+        last_auto_post_date: Date of the most recent automatic post.
+        latest_message_id: Message ID for the most recent chunk delivery.
+        joined_users: Set of user IDs who opted in with /join.
+        latest_reactors: Set of user IDs who have reacted to the latest chunk.
+        completed: Flag indicating whether the book has been fully delivered.
     """
 
     chunks: List[str]
     index: int
     chunk_size: int
+    auto_post_time: Optional[time] = None
+    auto_active: bool = False
+    last_auto_post_date: Optional[date] = None
+    latest_message_id: Optional[int] = None
+    joined_users: Set[int] = field(default_factory=set)
+    latest_reactors: Set[int] = field(default_factory=set)
+    completed: bool = False
 
 
 def split_into_paragraphs(text: str) -> List[str]:
@@ -60,6 +75,4 @@ def get_or_create_state(store: Dict[int, ChannelBookState], channel_id: int) -> 
     if channel_id not in store:
         store[channel_id] = ChannelBookState(chunks=[], index=0, chunk_size=3)
     return store[channel_id]
-
-
 
